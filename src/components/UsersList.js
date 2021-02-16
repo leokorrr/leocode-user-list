@@ -6,32 +6,29 @@ import {FormControl, TextField, Button} from '@material-ui/core'
 function UserList() {
     const [users, setUsers] = useState([])
     const [searchValue, setSearchValue] = useState('')
-    const fetchUsers = () => {
-        let query
-        searchValue === '' ? query = '' : query = `?name=${searchValue}`
+    const fetchUsers = searchValue => {
+        const query = searchValue === '' ?  ''  :  `?name=${searchValue}`
         fetch(`https://jsonplaceholder.typicode.com/users${query}`)
             .then(res => res.json())
             .then(data => setUsers(data))
             .catch(err => console.log(err))
     }
-    const handleSearch = () => {
-        fetchUsers()
-    }
+    const handleChange = e => setSearchValue(e.target.value)
     const handleClear = () => {
         setSearchValue('')
-        fetchUsers()
+        fetchUsers('')
     }
     useEffect(() => {
-        if (searchValue === '') fetchUsers()
-    }, [searchValue])
+        fetchUsers(searchValue)
+    }, [])
     return (
         <div>
             <form noValidate autoComplete="off">
                 <FormControl fullWidth>
-                    <TextField id="search" label="Search by Name Surname" value={searchValue} color="primary" onChange={e => setSearchValue(e.target.value)} inputProps={{style: {fontSize: '1.8rem'}}} InputLabelProps={{style: {fontSize: '1.8rem'}}} />
+                    <TextField id="search" label="Search by Name Surname" value={searchValue} color="primary" onChange={e => handleChange(e)} inputProps={{style: {fontSize: '1.8rem'}}} InputLabelProps={{style: {fontSize: '1.8rem'}}} />
                     <div className="buttons-container">
-                        <Button size="small" variant="contained" disableElevation color="primary" onClick={() => handleSearch()}>Search</Button>
-                        <Button size="small" disableElevation color="secondary" onClick={() => handleClear()}>Clear</Button>
+                        <Button size="small" variant="contained" disableElevation color="primary" onClick={() => fetchUsers(searchValue)}>Search</Button>
+                        <Button size="small" disableElevation onClick={() => handleClear()} color="secondary">Clear</Button>
                     </div>
                 </FormControl>
             </form>
