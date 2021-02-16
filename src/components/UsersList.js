@@ -6,8 +6,8 @@ import {FormControl, TextField, Button} from '@material-ui/core'
 function UserList() {
     const [users, setUsers] = useState([])
     const [searchValue, setSearchValue] = useState('')
-    const fetchUsers = searchValue => {
-        const query = searchValue === '' ?  ''  :  `?name=${searchValue}`
+    const fetchUsers = inputValue => {
+        const query = inputValue === '' ?  ''  :  `?name=${inputValue}`
         fetch(`https://jsonplaceholder.typicode.com/users${query}`)
             .then(res => res.json())
             .then(data => setUsers(data))
