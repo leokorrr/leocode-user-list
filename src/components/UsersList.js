@@ -1,39 +1,68 @@
 import User from './User';
 import {useState, useEffect} from 'react'
-import {List, ListItem, Typography} from '@material-ui/core'
+import {CircularProgress, List, ListItem, Typography} from '@material-ui/core'
 import {FormControl, TextField, Button} from '@material-ui/core'
+import {reactLocalStorage} from "reactjs-localstorage";
 
 function UserList() {
     const [users, setUsers] = useState([])
     const [searchValue, setSearchValue] = useState('')
-    const fetchUsers = inputValue => {
-        const query = inputValue === '' ?  ''  :  `?name=${inputValue}`
-        fetch(`https://jsonplaceholder.typicode.com/users${query}`)
-            .then(res => res.json())
-            .then(data => setUsers(data))
-            .catch(err => console.log(err))
-    }
+    const [error, setError] = useState(false)
+    const [loading, setLoading] = useState(true)
     const handleChange = e => setSearchValue(e.target.value)
     const handleClear = () => {
         setSearchValue('')
-        fetchUsers('')
+        setUsers(reactLocalStorage.getObject('users'))
+    }
+    const handleSearch = () => {
+        if (searchValue === '') {
+            setError(true)
+        } else {
+            let result = reactLocalStorage.getObject('users').filter(localStorageUser => searchValue.length > 1 && localStorageUser.name.includes(searchValue))
+            setUsers(result)
+            setError(false)
+        }
     }
     useEffect(() => {
-        fetchUsers(searchValue)
+        fetch(process.env.REACT_APP_API_LINK)
+            .then(res => res.json())
+            .then(data => {
+                reactLocalStorage.setObject('users', data)
+                setUsers(data)
+                setLoading(false)
+            })
+            .catch(err => {
+                console.log(err)
+                setLoading(false)
+            })
     }, [])
     return (
         <div>
             <form noValidate autoComplete="off">
                 <FormControl fullWidth>
-                    <TextField id="search" label="Search by Name Surname" value={searchValue} color="primary" onChange={e => handleChange(e)} inputProps={{style: {fontSize: '1.8rem'}}} InputLabelProps={{style: {fontSize: '1.8rem'}}} />
+                    <TextField id="search"
+                               label="Search by Name or Surname"
+                               helperText={error && 'Input cannot be empty' }
+                               error={error}
+                               value={searchValue} color="primary"
+                               onChange={e => handleChange(e)}
+                               InputProps={{style: {fontSize: '1.8rem'}}}
+                               FormHelperTextProps={{style: {fontSize: '1rem'}}}
+                               InputLabelProps={{style: {fontSize: '1.8rem'}}} />
                     <div className="buttons-container">
-                        <Button size="small" variant="contained" disableElevation color="primary" onClick={() => fetchUsers(searchValue)}>Search</Button>
+                        <Button size="small" variant="contained" disableElevation color="primary" onClick={() => handleSearch()}>Search</Button>
                         <Button size="small" disableElevation onClick={() => handleClear()} color="secondary">Clear</Button>
                     </div>
                 </FormControl>
             </form>
-            <List component="nav">
-                {users.length === 0 ? <Typography variant="h4">No users found...</Typography> : users.map((user, index) => (<ListItem key={user.id}><User name={user.name} username={user.username} index={index}/></ListItem>))}
+            <List>
+                {
+                    loading ? <CircularProgress/> : users.length === 0 ?
+                        <Typography variant="h4">No users found...</Typography>
+                        : users.map((user, index) => (
+                            <ListItem disableGutters key={user.id}><User name={user.name} username={user.username} index={index}/></ListItem>
+                        ))
+                }
             </List>
         </div>
     )
